@@ -9,7 +9,7 @@ void Hardware::Config_Hardwares()
 {
     /**-----    配置CAN总线     -----**/
     Hardware::hcan_main = ToID(&hcan1);
-    Hardware::hcan_sub = nullptr;
+    Hardware::hcan_sub = ToID(&hcan2);
  
     /**-----    配置串口    -----**/
     Hardware::huart_host = ToID(&huart1);

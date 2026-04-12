@@ -37,7 +37,7 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-    motors[0].driver.Enable();
+//    motors[0].driver.Enable();
 
     motors[1].ConfigADRC()
     .AsSpeedC()
@@ -48,7 +48,7 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-    motors[1].driver.Enable();
+//    motors[1].driver.Enable();
 
     motors[2].ConfigADRC()
     .AsSpeedC()
@@ -59,7 +59,7 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-    motors[2].driver.Enable();
+//    motors[2].driver.Enable();
 
     motors[3].ConfigADRC()
     .AsSpeedC()
@@ -70,7 +70,7 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-    motors[3].driver.Enable();
+//    motors[3].driver.Enable();
 
     SetGear(FIRST);
 //    if(farcon.toggle[1] == 0)
@@ -81,7 +81,7 @@ void ChassisType::Start()
 //    {
 //        control_mode = OPEN;
 //    }
-    chassis_board.Init(Hardware::hcan_main, 0x210, false);
+    chassis_board.Init(Hardware::hcan_sub, 0x210, false);
     chassis_board.RegisterTask(1, ChassisSpeedRxCallback, this);
 }
 
@@ -96,16 +96,7 @@ void ChassisType::Update()
             motors[i].driver.Disable();
         }
     }
-    // 遥控器控制逻辑
-    if(control_mode == FARCON)
-    {
-        // 读取遥控器数据到底盘控制变量
-        targ_speed.x = -farcon.jy_data_origin[3]*1.0f / 100.f * _max_velo;   // 前后
-        targ_speed.y = -farcon.jy_data_origin[2]*1.0f / 100.f * _max_velo;   // 左右
-        targ_speed.z = -farcon.jy_data_origin[0]*1.0f / 100.f * _max_omega;  // 旋转
-        this->Move(targ_speed);
-    }
-
+ 
     // 实现闭环的地方
     if (_walking || _is_pos_locked)
     {
@@ -202,9 +193,8 @@ void ChassisType::_UploadSpeed()
                 for (int i = 0; i < 4; i++)
                 {
                     targ_speed = Vec3(0, 0, 0);
-                    // motors[i].Neutral();
+                    motors[i].Neutral();
                 }
-                SetGear(NEUTRAL);
             }
         }
         else    // (2) 底盘已经停止，直接进入空档
@@ -212,9 +202,8 @@ void ChassisType::_UploadSpeed()
             for (int i = 0; i < 4; i++)
             {
                 targ_speed = Vec3(0, 0, 0);
-                // motors[i].Neutral();
+                motors[i].Neutral();
             }
-            SetGear(NEUTRAL);
         }
 
         
@@ -477,4 +466,6 @@ void ChassisType::ChassisSpeedRxCallback(uint8_t task_id, const uint8_t* payload
     self->targ_speed.x = ((int16_t)(payload[0] << 8 | payload[1]));   
     self->targ_speed.y = ((int16_t)(payload[2] << 8 | payload[3]));  
     self->targ_speed.z = ((int16_t)(payload[4] << 8 | payload[5]));  
+
+    self->_safe_lock_tick = 100;   // 刷新安全锁
 }

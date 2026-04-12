@@ -118,7 +118,7 @@ void MainFrameCpp()
   chas.Enable();
   // monit.Track(chas.motors[0].motor_adrc.eso.z3);
 
-  OrganizeStates();
+//   OrganizeStates();
 
   // 配置状态图为简并模式
   // example_graph.Degenerate(Action_of_Dege);
