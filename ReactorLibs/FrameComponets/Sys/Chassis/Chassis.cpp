@@ -37,7 +37,7 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-//    motors[0].driver.Enable();
+    // motors[0].driver.Enable();
 
     motors[1].ConfigADRC()
     .AsSpeedC()
@@ -48,7 +48,7 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-//    motors[1].driver.Enable();
+    // motors[1].driver.Enable();
 
     motors[2].ConfigADRC()
     .AsSpeedC()
@@ -59,7 +59,7 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-//    motors[2].driver.Enable();
+    // motors[2].driver.Enable();
 
     motors[3].ConfigADRC()
     .AsSpeedC()
@@ -70,17 +70,14 @@ void ChassisType::Start()
     .ADRC_MaxPlannedVel(3000.0f)
     .ADRC_SOTF(0.5f)
     .Apply();
-//    motors[3].driver.Enable();
+    // motors[3].driver.Enable();
+    for(int i = 0; i < 4; i++)
+    {
+        // motors[i].driver.Enable();
+    }
 
     SetGear(FIRST);
-//    if(farcon.toggle[1] == 0)
-//    {
-//        control_mode = FARCON;
-//    }
-//    else 
-//    {
-//        control_mode = OPEN;
-//    }
+
     chassis_board.Init(Hardware::hcan_sub, 0x210, false);
     chassis_board.RegisterTask(1, ChassisSpeedRxCallback, this);
 }
@@ -462,10 +459,15 @@ void ChassisType::ChassisSpeedRxCallback(uint8_t task_id, const uint8_t* payload
     {
         return;
     }
+
+    int16_t x, y, z;
+    x = ((int16_t)(payload[0] << 8 | payload[1]));
+    y = ((int16_t)(payload[2] << 8 | payload[3]));
+    z = ((int16_t)(payload[4] << 8 | payload[5]));
     
-    self->targ_speed.x = ((int16_t)(payload[0] << 8 | payload[1]));   
-    self->targ_speed.y = ((int16_t)(payload[2] << 8 | payload[3]));  
-    self->targ_speed.z = ((int16_t)(payload[4] << 8 | payload[5]));  
+    self->targ_speed.x = x / 100.0f;   // 发送时放大了100倍，在这里还原精度（要改发送）
+    self->targ_speed.y = y / 100.0f;
+    self->targ_speed.z = z / 100.0f;
 
     self->_safe_lock_tick = 100;   // 刷新安全锁
 }
