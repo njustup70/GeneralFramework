@@ -45,5 +45,7 @@
     "[c]": {
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
     },
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "trae.tab.enableRename": false,
+    "trae.tab.enableAutoImport": false
 }

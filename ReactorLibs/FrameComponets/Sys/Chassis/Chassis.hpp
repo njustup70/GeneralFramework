@@ -2,12 +2,13 @@
 #define _CHASSIS_HPP_
 
 #include "std_math.hpp"
-#include "motor_dji.hpp"
+// #include "motor_dji.hpp"
 #include "System.hpp"
 
 
-#define ROTATE_RADIUS 0.29185f
-#define WHEEL_DIAMETER 0.154f
+
+#define ROTATE_RADIUS 0.446286f
+#define WHEEL_DIAMETER 0.125133f
 
 class MoveAct;
 class ChassisType;
@@ -20,6 +21,14 @@ class Path
     Vec2 key_points[32];            // 路径点数组
 };
 
+// 不同于汽车的档位，这个档位是为了判别空挡并重启，以及设置底盘不同速度性能参数
+typedef enum 
+{
+    NEUTRAL = 0,
+    FIRST = 1,
+    SECOND = 2,
+    THIRD = 3
+}Gear;
 
 class ChasAPIHandle
 {
@@ -55,7 +64,7 @@ class ChassisType : public Application
         bool _is_pos_locked = false;        // 常锁位置环
         bool _is_yaw_locked = false;        // 常锁姿态环
 
-
+        Gear _cur_gear = NEUTRAL;           // 当前档位
         
         /// @param 四个电机的目标速度，单位m/s
         float _motor_spd[4];
@@ -100,7 +109,7 @@ class ChassisType : public Application
     public:
         // 分别对应四个底盘电机
         MotorDJI motors[4];
-        
+
         // 属性参数
         float velo;     // 对应的线速度，单位m/s
         bool enabled = false;    // 底盘使能标志
@@ -115,6 +124,11 @@ class ChassisType : public Application
         float move_precision = 0.05f;       // 最小移动精度，单位m
         float rotate_precision = 0.02f;     // 最小旋转精度，单位rad    （0.017453 rad / 度）
 
+        // 是否到达目标位置
+        bool move_ok = false;
+        // 是否旋转到目标角度
+        bool rotate_ok = false;
+
         /**         直接接口    (Direct)        **/
         void Config();
         void Enable();
@@ -126,6 +140,14 @@ class ChassisType : public Application
 
         void MoveAt(Vec2 Pos);
         void RotateAt(float yaw);
+
+        // 获取底盘当前档位
+        Gear GetGear();
+        void SetGear(Gear gear);
+        void SetSpeedParams(float max_accel, float max_velo, float max_omega, float max_beta);
+
+        static void ChassisSpeedRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx);
+
 };
 
 

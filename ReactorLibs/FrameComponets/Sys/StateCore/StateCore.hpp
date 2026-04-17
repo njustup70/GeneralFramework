@@ -80,7 +80,8 @@ class StateGraph
     uint8_t stateNums;              // 状态块数量
 
     uint8_t executor_at_id = 0;     // 当前执行的状态ID
-    StateBlock& current_state = states[0]; // 当前状态块引用
+    // StateBlock& current_state = states[0]; // 当前状态块引用
+    StateBlock* current_state = &states[0]; // 当前状态块引用，修改为指针
     
     public:
     StateGraph(const char *name){
