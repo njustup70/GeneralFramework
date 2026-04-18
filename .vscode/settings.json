@@ -1,0 +1,49 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": [],
+    "files.exclude": {
+        "**/*.{map,list,hex,bin,elf}": true,
+        "**/Drivers": true,
+        "**/Middlewares": true,
+        "**/*.{ld,s}": true,
+        "**/Core/Startup": true,
+        "**/cmake-build-*": true,
+        "**/.mxproject": true,
+        "**/*.ioc": false,
+        "**/build": true,
+        "**/MDK-ARM": true,
+        "**/LICENSE": true,
+        "**/Imgs": true,
+        "**/cmake": true,
+        "**/CMakePresets.json": true,
+        "**/CMakeLists.txt": true,
+        "**/.gitattributes": true,
+        "**/.clang-format": true,
+        "**/ocd_cfg": true,
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": [
+        "--compile-commands-dir=build/Debug",
+        "--query-driver=C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/*/bin/arm-none-eabi-gcc*,C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/*/bin/arm-none-eabi-g++*",
+        "--all-scopes-completion",
+        "--completion-style=detailed",
+        "--header-insertion=never",
+        "--clang-tidy",
+        "-j=8"
+    ],
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "never",
+        "source.fixAll.clangd": "never"
+    },
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "[c]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "files.eol": "\n"
+}
