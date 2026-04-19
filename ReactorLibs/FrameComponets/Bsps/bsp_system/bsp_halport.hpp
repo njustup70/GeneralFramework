@@ -18,6 +18,7 @@
     #include "usart.h"
     #include "dma.h"
     #include "spi.h"
+    #include "tim.h"
 
 /* ==================================================================
  * 场景 2：在 Pure-Fram 分支（实验室），无硬件环境
@@ -62,6 +63,7 @@ namespace BSP
     namespace CAN { struct OpaqueCan; using CanID = OpaqueCan*; }
     namespace UART { struct OpaqueUart; using UartID = OpaqueUart*; }
     namespace SPI { struct OpaqueSpi; using SpiID = OpaqueSpi*; }
+    namespace TIM { struct OpaqueTim; using TimID = OpaqueTim*; } 
 }
 
 // ---- 框架助手函数：将 HAL 句柄转换为框架 ID ----
@@ -81,6 +83,12 @@ inline BSP::SPI::SpiID ToID(SPI_HandleTypeDef* handle)
 }
 
 
+inline BSP::TIM::TimID ToID(TIM_HandleTypeDef* handle)
+{
+    return reinterpret_cast<BSP::TIM::TimID>(handle);
+}
+
+
 namespace Hardware
 {
     void Config_Hardwares();
@@ -96,4 +104,6 @@ namespace Hardware
     /***---------------     框架定时器    ---------------***/
     /// @brief WS2812灯带定时器
     extern TIM_HandleTypeDef* htim_led;
+    /// @brief 抬升舵机定时器
+    extern TIM_HandleTypeDef* htim_liftservo;
 };

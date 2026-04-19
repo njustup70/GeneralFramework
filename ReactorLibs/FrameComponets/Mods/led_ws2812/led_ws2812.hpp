@@ -1,6 +1,6 @@
 /**
  * @author Huangney
- * @note 相较于先前的C版本，本库改为使用PWM驱动（这样不受MCU主频限制）
+ * @note 适配框架重构版：解耦HAL库，使用 TimID 句柄标识
  */
 #ifndef _LED_WS2812_HPP_
 #define _LED_WS2812_HPP_ 
@@ -12,7 +12,7 @@ class LedWs2812
 private:
     const static int MaxLedNums = 16;
 
-    uint32_t PwmMaxValue;        // PWM最大值
+    uint32_t PwmMaxValue;       // PWM最大值
     uint32_t HIGH_WS2812 = 0;   // PWM高电平数值
     uint32_t LOW_WS2812 = 0;    // PWM低电平数值
     uint32_t dwt_tick;
@@ -23,15 +23,19 @@ private:
 public:
     LedWs2812(){};
     ~LedWs2812(){};
-    TIM_HandleTypeDef *htim;        // PWM定时器句柄
+    
+    // 使用不透明指针替代 TIM_HandleTypeDef*
+    BSP::TIM::TimID id;         
     uint32_t Channel;
-    uint8_t LedNums;                // LED灯珠数量
+    uint8_t LedNums;            // LED灯珠数量
 
-    Vec3 BiasFactor;                // 颜色偏置因子（用于校正颜色）
+    Vec3 BiasFactor;            // 颜色偏置因子（用于校正颜色）
     
     void SetColor(int8_t Led_id, uint8_t R, uint8_t G, uint8_t B);
     void Upload();
-    void Init(TIM_HandleTypeDef *htim, uint32_t Channel, uint8_t LedNums);
+    
+    // 初始化接口改为接受 TimID
+    void Init(BSP::TIM::TimID id, uint32_t Channel, uint8_t LedNums);
     void Fill(uint8_t R, uint8_t G, uint8_t B);
 
     void Breath(Color color_0, float period);
@@ -39,11 +43,6 @@ public:
     void Running(Color color, float width, float period);
     void Lit(Color color);     // 供外部调用的Fill，省算力
     void Expand(Color color_0, float period);
-
 };
-
-
-
-
 
 #endif

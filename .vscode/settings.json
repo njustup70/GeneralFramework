@@ -20,13 +20,13 @@
         "**/CMakeLists.txt": true,
         "**/.gitattributes": true,
         "**/.clang-format": true,
-        "**/ocd_cfg": true,
+        "**/ocd_cfg": true
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "C_Cpp.intelliSenseEngine": "disabled",
     "clangd.arguments": [
         "--compile-commands-dir=build/Debug",
-        "--query-driver=C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/*/bin/arm-none-eabi-gcc*,C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/*/bin/arm-none-eabi-g++*",
+        "--query-driver=E:/APPS/ArmGNU/13.3 rel1/bin/arm-none-eabi-gcc*,E:/APPS/ArmGNU/13.3 rel1/bin/arm-none-eabi-g++*",
         "--all-scopes-completion",
         "--completion-style=detailed",
         "--header-insertion=never",

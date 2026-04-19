@@ -1,11 +1,10 @@
 #include "servo.hpp"
-#include "arm_math.h"
+#include <cmath>
 
-void Servo::Init(TIM_HandleTypeDef *htim, uint32_t channel)
+void Servo::Init(BSP::TIM::TimID id, uint32_t channel)
 {
-    BspTIMPWM_InstRegist(&pwm_inst, htim, channel);
+    pwm_inst.Init(id, channel);
     initialized = true;
-    
 }
 
 void Servo::Enable()
@@ -13,10 +12,10 @@ void Servo::Enable()
     if (!initialized) return;
 
     // 确认一下频率等于50Hz，舵机一般都是这个频率
-    if (fabs(pwm_inst.GetFreq(pwm_inst) - 50.0f) > 0.1f) return;
+    if (std::fabs(pwm_inst.GetFreq() - 50.0f) > 0.1f) return;
     
     enabled = true;
-    BspTIMPWM_Enable(&pwm_inst);
+    pwm_inst.Enable();
 }
 
 void Servo::Disable()
@@ -24,9 +23,8 @@ void Servo::Disable()
     if (!initialized) return;
     
     enabled = false;
-    BspTIMPWM_Disable(&pwm_inst);
+    pwm_inst.Disable();
 }
-
 
 void Servo::SetAngle(float ang)
 {
@@ -41,13 +39,5 @@ void Servo::SetAngle(float ang)
 
     // 通过线性映射计算占空比
     float duty = (angle + 90.0f) / 180.0f * (0.125f - 0.025f) + 0.025f;
-    BspTIMPWM_SetDuty(&pwm_inst, duty);
+    pwm_inst.SetDuty(duty);
 }
-
-
-
-
-
-
-
-

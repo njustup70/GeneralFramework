@@ -1,56 +1,83 @@
 #include "bsp_tim_pwm.hpp"
+#include "bsp_halport.hpp" 
 
+using namespace BSP::TIM;
 
-static float GetFreq(struct BspTIMPWM_t pwm_inst)
+// ---- PWM 类方法实现 ----
+
+void PWM::UpdateFreq()
 {
-    // 计算PWM频率 = 定时器时钟频率 / (ARR + 1)
-    // 假设使用APB1TimerClock作为定时器时钟（考虑分频）
-    uint32_t timer_clock_freq = HAL_RCC_GetPCLK1Freq() * 2 / (pwm_inst.htim->Instance->PSC + 1);   
+    if (!id_) return;
 
-    float pwm_freq = (float)timer_clock_freq / (pwm_inst.auto_reload_value + 1);
-    return pwm_freq;
-}
-
-
-void BspTIMPWM_InstRegist(BspTIMPWM_TypeDef *tim_inst, TIM_HandleTypeDef *htim, uint32_t channel)
-{
-    tim_inst->htim = htim;
-    tim_inst->channel = channel;
-
-    // 获取ARR的值
-    tim_inst->auto_reload_value = __HAL_TIM_GET_AUTORELOAD(tim_inst->htim);
-    // 获取CCR的值
-    tim_inst->compare_value = __HAL_TIM_GET_COMPARE(tim_inst->htim, tim_inst->channel);
-    // 给函数指针赋值
-    tim_inst->GetFreq = GetFreq;
-
-    tim_inst->freq = tim_inst->GetFreq(*tim_inst);
-    // 设置初始占空比为 0
-    BspTIMPWM_SetDuty(tim_inst, 0.0f);
-}
-
-
-void BspTIMPWM_SetDuty(BspTIMPWM_TypeDef *tim_inst, float duty)
-{
-    if(duty < 0.0f) duty = 0.0f;
-    if(duty > 1.0f) duty = 1.0f;
-
-    tim_inst->duty = duty;
+#ifdef USE_REAL_HAL
+    // 【核心修复】：直接用 reinterpret_cast 强转解包，告别类型匹配报错
+    TIM_HandleTypeDef* htim = reinterpret_cast<TIM_HandleTypeDef*>(id_);
     
-    // 计算CCR的对应值
-    tim_inst->compare_value = (uint32_t)(tim_inst->auto_reload_value * duty);
-    __HAL_TIM_SET_COMPARE(tim_inst->htim, tim_inst->channel, tim_inst->compare_value);
+    // 计算PWM频率 = 定时器时钟频率 / (ARR + 1)
+    uint32_t timer_clock_freq = HAL_RCC_GetPCLK1Freq() * 2 / (htim->Instance->PSC + 1);   
+    freq_ = (float)timer_clock_freq / (arr_ + 1);
+#else
+    freq_ = 50.0f; // 虚拟环境默认给50Hz防除零
+#endif
 }
 
-
-void BspTIMPWM_Enable(BspTIMPWM_TypeDef *tim_inst)
+void PWM::Init(TimID id, uint32_t channel)
 {
-    HAL_TIM_PWM_Start(tim_inst->htim, tim_inst->channel);
-    tim_inst->enabled = 1;
+    id_ = id;
+    channel_ = channel;
+
+    if (!id_) return;
+
+#ifdef USE_REAL_HAL
+    // 【核心修复】：直接解包
+    TIM_HandleTypeDef* htim = reinterpret_cast<TIM_HandleTypeDef*>(id_);
+    arr_ = __HAL_TIM_GET_AUTORELOAD(htim);
+    ccr_ = __HAL_TIM_GET_COMPARE(htim, channel_);
+#else
+    arr_ = 19999;
+    ccr_ = 0;
+#endif
+
+    UpdateFreq();
+    SetDuty(0.0f); // 默认初始占空比为 0
 }
 
-void BspTIMPWM_Disable(BspTIMPWM_TypeDef *tim_inst)
+void PWM::SetDuty(float duty)
 {
-    HAL_TIM_PWM_Stop(tim_inst->htim, tim_inst->channel);
-    tim_inst->enabled = 0;
+    if (!id_) return;
+
+    // 限制范围在 0.0 ~ 1.0 之间
+    if (duty < 0.0f) duty = 0.0f;
+    if (duty > 1.0f) duty = 1.0f;
+
+    duty_ = duty;
+    ccr_ = (uint32_t)(arr_ * duty);
+
+#ifdef USE_REAL_HAL
+    // 【核心修复】：直接解包
+    TIM_HandleTypeDef* htim = reinterpret_cast<TIM_HandleTypeDef*>(id_);
+    __HAL_TIM_SET_COMPARE(htim, channel_, ccr_);
+#endif
+}
+
+void PWM::Enable()
+{
+    if (!id_) return;
+
+#ifdef USE_REAL_HAL
+    TIM_HandleTypeDef* htim = reinterpret_cast<TIM_HandleTypeDef*>(id_);
+    HAL_TIM_PWM_Start(htim, channel_);
+#endif
+    enabled_ = true;
+}
+
+void PWM::Disable()
+{
+    if (!id_) return;
+
+#ifdef USE_REAL_HAL
+    TIM_HandleTypeDef* htim = reinterpret_cast<TIM_HandleTypeDef*>(id_);
+    HAL_TIM_PWM_Stop(htim, channel_);
+#endif
+    enabled_ = false;
 }

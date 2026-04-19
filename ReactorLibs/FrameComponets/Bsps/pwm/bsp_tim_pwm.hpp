@@ -1,26 +1,55 @@
-#ifndef BSP_TIM_PWM_H
-#define BSP_TIM_PWM_H
-#include "bsp_halport.hpp"
+#pragma once
+#include <cstdint>
 
-typedef struct BspTIMPWM_t
+namespace BSP
 {
-    TIM_HandleTypeDef *htim;        // PWM定时器句柄
-    uint32_t channel;               // PWM通道
-    float freq;                     // PWM频率
-    uint8_t enabled;                // PWM使能标志
+    namespace TIM
+    {
+        // 不透明指针 TIM_HandleTypeDef* 的框架解耦替代
+        struct OpaqueTim;
+        using TimID = OpaqueTim*;
 
-    uint32_t auto_reload_value;     // 自动重装载寄存器的值（ARR）
-    uint32_t compare_value;         // 比较寄存器的值（CCR）
+        /**
+         * @brief PWM 实例类
+         */
+        class PWM
+        {
+        public:
+            PWM() : id_(nullptr), channel_(0), freq_(0.0f), enabled_(false), arr_(0), ccr_(0), duty_(0.0f) {}
 
-    float duty;                     // PWM占空比
-    float (*GetFreq)(struct BspTIMPWM_t pwm_inst);             // 获取PWM频率的函数指针    
-}BspTIMPWM_TypeDef;
+            /// @brief 初始化PWM实例
+            /// @param id 目标硬件定时器的不透明句柄
+            /// @param channel PWM通道 (如 TIM_CHANNEL_1)
+            void Init(TimID id, uint32_t channel);
 
+            /// @brief 设置占空比
+            /// @param duty 占空比，范围 [0.0f, 1.0f]
+            void SetDuty(float duty);
 
-void BspTIMPWM_InstRegist(BspTIMPWM_TypeDef *tim_inst, TIM_HandleTypeDef *htim, uint32_t channel);
+            /// @brief 使能PWM输出
+            void Enable();
 
-void BspTIMPWM_SetDuty(BspTIMPWM_TypeDef *tim_inst, float duty);
-void BspTIMPWM_Enable(BspTIMPWM_TypeDef *tim_inst);
-void BspTIMPWM_Disable(BspTIMPWM_TypeDef *tim_inst);
+            /// @brief 关闭PWM输出
+            void Disable();
 
-#endif
+            /// @brief 获取当前计算得出的PWM频率
+            float GetFreq() const { return freq_; }
+
+            /// @brief 获取当前占空比
+            float GetDuty() const { return duty_; }
+
+        private:
+            TimID id_;
+            uint32_t channel_;
+            float freq_;
+            bool enabled_;
+
+            uint32_t arr_;
+            uint32_t ccr_;
+            float duty_;
+
+            /// @brief 内部刷新频率
+            void UpdateFreq();
+        };
+    }
+}
