@@ -9,8 +9,6 @@ Monitor &monit = Monitor::GetInstance();
 
 StateGraph example_graph("graph_name");
 void Action_of_Dege(StateCore *core);
-Lift_Leg &lift_leg = Lift_Leg::GetInstance();
-ChassisType &chas = ChassisType::GetInstance();
 
 void Action_of_MoveTo2(StateCore *core)
 {
@@ -112,20 +110,23 @@ void OrganizeStates()
  */
 void MainFrameCpp()
 {
-  //  System.RegistApp(lift_leg);
-  System.RegistApp(chas);
-  System.SetPositionSource(chas.chas_odom.pos);
-  chas.Enable();
-  // monit.Track(chas.motors[0].motor_adrc.eso.z3);
+    System.RegistApp(lift_leg);
+    System.RegistApp(chas);
+    System.SetPositionSource(chas.chas_odom.pos);
 
-//   OrganizeStates();
+    // 使能应用
+    lift_leg.Enable();
+    chas.Enable();
+    // monit.Track(chas.motors[0].motor_adrc.eso.z3);
 
-  // 配置状态图为简并模式
-  // example_graph.Degenerate(Action_of_Dege);
+    // OrganizeStates();
 
-  // 向状态机核心注册
-  core.RegistGraph(example_graph);
-  core.Enable(0); // 启动状态机核心，指定初始状态图为0号图
+    // 配置状态图为简并模式
+    // example_graph.Degenerate(Action_of_Dege);
+
+    // 向状态机核心注册
+    core.RegistGraph(example_graph);
+    core.Enable(0); // 启动状态机核心，指定初始状态图为0号图
 }
 
 void Action_of_Dege(StateCore *core)

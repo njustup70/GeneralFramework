@@ -1,6 +1,8 @@
 #include "Lift_Leg.hpp"
 #include "InterBoardComm.hpp"
 
+Lift_Leg &lift_leg = Lift_Leg::GetInstance();
+
 void Lift_Leg::Start()
 {
     _enabled = false;
@@ -42,9 +44,9 @@ void Lift_Leg::Start()
         .ADRC_SOTF(0.33f)
         .Apply();
 
-    // motor_front_left.driver.Enable();
-    // motor_front_right.driver.Enable();
-    // motor_back.driver.Enable();
+    motor_front_left.driver.Enable();
+    motor_front_right.driver.Enable();
+    motor_back.driver.Enable();
 
 }
 

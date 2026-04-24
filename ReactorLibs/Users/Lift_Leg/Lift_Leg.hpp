@@ -50,3 +50,5 @@ private:
     int _front_right_bias = 0;
     int _back_bias = 0;
 };
+
+extern Lift_Leg &lift_leg;

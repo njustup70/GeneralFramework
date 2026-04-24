@@ -6,6 +6,8 @@
 
 
 ChassisType& test_chas = ChassisType::GetInstance();
+ChassisType &chas = ChassisType::GetInstance();
+
 //extern Farcon farcon;
 
 void ChassisType::Start()
@@ -110,6 +112,12 @@ void ChassisType::Update()
     // 更新自解算里程计
     _UpdateChasOdom();
 
+    uint8_t odo_self[12] = {0};
+    memcpy(&odo_self[0], &this->chas_odom.pos.x, sizeof(float));
+    memcpy(&odo_self[4], &this->chas_odom.pos.y, sizeof(float));
+    memcpy(&odo_self[8], &this->chas_odom.pos.z, sizeof(float));
+    chassis_board.SendTask(0x220, 1, odo_self, sizeof(odo_self));
+
     targ_velo = targ_speed.Length();
 
     // 安全锁倒计时
@@ -169,6 +177,13 @@ void ChassisType::_UploadSpeed()
     {
         runtime_cnt = 0;
         _SendSpdToMotor();
+        for(int i = 0; i < 4; i++)
+        {
+            if (motors[i].mode == NoneC)
+            {
+                motors[i].Uneutral();
+            }
+        }
     }
     else
     {

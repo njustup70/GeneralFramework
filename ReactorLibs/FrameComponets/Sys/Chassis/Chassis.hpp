@@ -149,6 +149,6 @@ class ChassisType : public Application
         static void ChassisSpeedRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx);
 
 };
-
+extern ChassisType &chas;
 
 #endif
