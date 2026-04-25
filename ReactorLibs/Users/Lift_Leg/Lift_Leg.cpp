@@ -48,6 +48,7 @@ void Lift_Leg::Start()
     motor_front_right.driver.Enable();
     motor_back.driver.Enable();
 
+    chassis_board.RegisterTask(2, LiftLegCmdRxCallback, this);
 }
 
 int half_front_stroke = LiftLegConst::FrontStrokeCode / 2;
@@ -131,3 +132,50 @@ void Lift_Leg::Back_Origin()
     _back_targ_pos_code = 0;
 }
 
+void Lift_Leg::LiftLegCmdRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx)
+{
+    if(payload == nullptr || payload_len == 0)
+    {
+        return;
+    }
+
+    uint8_t cmd = payload[0];
+    
+    switch(cmd)
+    {
+        // 前腿抬高200
+        case 0x01:
+            GetInstance().Front_LiftAt200();
+        break;
+
+        // 前腿放低200
+        case 0x02:
+            GetInstance().Front_PutDownAt200();
+        break;
+
+        // 前腿抬高400
+        case 0x03:
+            GetInstance().Front_LiftAt400();
+        break;
+
+        // 前腿放低400
+        case 0x04:
+            GetInstance().Front_PutDownAt400();
+        break;
+
+        // 后腿归位
+        case 0x05:
+            GetInstance().Back_Origin();        
+        break;
+
+        // 后腿放低200
+        case 0x06:
+            GetInstance().Back_PutDownAt200();
+        break;
+
+        // 后腿放低400
+        case 0x07:
+            GetInstance().Back_PutDownAt400();
+        break;    
+    }
+}

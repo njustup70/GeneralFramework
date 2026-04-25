@@ -38,6 +38,8 @@ public:
     void Back_PutDownAt400();
     void Back_Origin();
 
+    static void LiftLegCmdRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx);
+
     bool _enabled = false;
 
 private:
