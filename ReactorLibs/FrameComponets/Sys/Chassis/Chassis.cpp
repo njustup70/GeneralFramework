@@ -3,7 +3,7 @@
 #include "Monitor.hpp"
 #include "farcon.hpp"
 #include "InterBoardComm.hpp"
-
+#include "Lift_Leg.hpp"
 
 ChassisType& test_chas = ChassisType::GetInstance();
 ChassisType &chas = ChassisType::GetInstance();
@@ -75,13 +75,13 @@ void ChassisType::Start()
     // motors[3].driver.Enable();
     for(int i = 0; i < 4; i++)
     {
-        // motors[i].driver.Enable();
+        motors[i].driver.Enable();
     }
 
     SetGear(FIRST);
 
-    chassis_board.Init(Hardware::hcan_sub, 0x210, false);
     chassis_board.RegisterTask(1, ChassisSpeedRxCallback, this);
+    chassis_board.RegisterTask(3, DebugOutRxCallback, this);
 }
 
 void ChassisType::Update()
@@ -485,4 +485,28 @@ void ChassisType::ChassisSpeedRxCallback(uint8_t task_id, const uint8_t* payload
     self->targ_speed.z = z / 100.0f;
 
     self->_safe_lock_tick = 100;   // 刷新安全锁
+}
+
+void ChassisType::DebugOutRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx)
+{
+    if(payload == nullptr || payload_len == 0)
+    {
+        return;
+    }
+    if(payload[0] == 0x01)
+    {
+        for(int i = 0; i < 4; i++)
+        {
+            GetInstance().motors[i].Neutral();
+            GetInstance().motors[i].driver.Disable();
+        }
+        lift_leg.motor_back.Neutral();
+        lift_leg.motor_back.driver.Disable();
+
+        lift_leg.motor_front_left.Neutral();
+        lift_leg.motor_front_left.driver.Disable();
+
+        lift_leg.motor_front_right.Neutral();
+        lift_leg.motor_front_right.driver.Disable();
+    }
 }

@@ -147,7 +147,7 @@ class ChassisType : public Application
         void SetSpeedParams(float max_accel, float max_velo, float max_omega, float max_beta);
 
         static void ChassisSpeedRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx);
-
+        static void DebugOutRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx);
 };
 extern ChassisType &chas;
 
