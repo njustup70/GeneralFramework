@@ -9,16 +9,17 @@
 #include "freertos.h"
 #include "task.h"
 #include "RtosCpp.hpp"
+#include "InterBoardComm.hpp"
 
 SystemType& System = SystemType::GetInstance();
 LedWs2812 sys_ledband;
 
 void SystemType::Init(bool Sc)
 {
-  // 输出系统启动信息
-  BspLog_LogInfo("\n\n");
-  BspLog_LogSpec("/----^---^-- Welcome to REACTOR SYSTEM --^---^----/");
-  BspLog_LogInfo("Waiting for system initialization...\n\n");
+    // 输出系统启动信息
+    BspLog_LogInfo("\n\n");
+    BspLog_LogSpec("/----^---^-- Welcome to REACTOR SYSTEM --^---^----/");
+    BspLog_LogInfo("Waiting for system initialization...\n\n");
 
     // 初始化DWT计时器（C板）
     DWT_Init(CPU_HERT_C_BOARD_MHZ);
@@ -26,15 +27,16 @@ void SystemType::Init(bool Sc)
     // 初始化Monitor监视器
     Monitor::GetInstance().Init(Hardware::huart_host, nullptr, false);
 
-    // 初始化系统灯带
-    sys_ledband.Init(Hardware::htim_led, TIM_CHANNEL_1, 13);
-    // 颜色偏置因子（用于校正颜色）
-    sys_ledband.BiasFactor = Vec3(0.843f, 1.0f, 0.843f); 
+    // // 初始化系统灯带
+    // sys_ledband.Init(Hardware::htim_led, TIM_CHANNEL_1, 13);
+    // // 颜色偏置因子（用于校正颜色）
+    // sys_ledband.BiasFactor = Vec3(0.843f, 1.0f, 0.843f); 
 
-    farcon.init(Hardware::huart_farcon);
+    // farcon.init(Hardware::huart_farcon);
     
-    odometer.Init(Hardware::huart_odom, true, false, false, true);
+    // odometer.Init(Hardware::huart_odom, true, false, false, true);
 
+    chassis_board.Init(Hardware::hcan_sub, 0x210, false);
   // odometer.Init(Hardware::huart_odom, true, false, false, true);
 
   // 自动开始自检

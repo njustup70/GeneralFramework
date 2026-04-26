@@ -16,65 +16,16 @@ void ChassisType::Start()
     for (int i = 0; i < 4; i++)
     {
         motors[i].Init(Hardware::hcan_main, i + 1, DJI_C620);
-        // motors[i].SetDt(0.002); // 底盘的电机设为500Hz
-        // motors[i].ConfigADRC()
-        // .AsSpeedC()
-        // .ADRC_Womega(32.0f, 7.6f)
-        // .ADRC_Physic(5.29e-4f, 0.30f, 0.005f)
-        // .ADRC_Limit(15.0f)
-        // .SpdLimit(1500.0f)
-        // .ADRC_MaxPlannedVel(1500.0f)
-        // .ADRC_SOTF(0.97f)
-        // .Apply();
-        // motors[i].driver.Enable();
-    }
-    motors[2].SetDt(0.002); // 底盘的电机设为500Hz
-    motors[3].SetDt(0.002); // 底盘的电机设为500Hz
-    motors[0].ConfigADRC()
-    .AsSpeedC()
-    .ADRC_Womega(42.0f, 9.6f)
-    .ADRC_Physic(2.0e-4f, 0.30f, 0.005f)
-    .ADRC_Limit(15.0f)
-    .SpdLimit(3000.0f)
-    .ADRC_MaxPlannedVel(3000.0f)
-    .ADRC_SOTF(0.5f)
-    .Apply();
-    // motors[0].driver.Enable();
-
-    motors[1].ConfigADRC()
-    .AsSpeedC()
-    .ADRC_Womega(42.0f, 9.6f)
-    .ADRC_Physic(2.0e-4f, 0.30f, 0.005f)
-    .ADRC_Limit(15.0f)
-    .SpdLimit(3000.0f)
-    .ADRC_MaxPlannedVel(3000.0f)
-    .ADRC_SOTF(0.5f)
-    .Apply();
-    // motors[1].driver.Enable();
-
-    motors[2].ConfigADRC()
-    .AsSpeedC()
-    .ADRC_Womega(42.0f, 9.6f)
-    .ADRC_Physic(2.0e-4f, 0.30f, 0.005f)
-    .ADRC_Limit(15.0f)
-    .SpdLimit(3000.0f)
-    .ADRC_MaxPlannedVel(3000.0f)
-    .ADRC_SOTF(0.5f)
-    .Apply();
-    // motors[2].driver.Enable();
-
-    motors[3].ConfigADRC()
-    .AsSpeedC()
-    .ADRC_Womega(42.0f, 9.6f)
-    .ADRC_Physic(2.0e-4f, 0.30f, 0.005f)
-    .ADRC_Limit(15.0f)
-    .SpdLimit(3000.0f)
-    .ADRC_MaxPlannedVel(3000.0f)
-    .ADRC_SOTF(0.5f)
-    .Apply();
-    // motors[3].driver.Enable();
-    for(int i = 0; i < 4; i++)
-    {
+        motors[i].SetDt(0.002); // 底盘的电机设为500Hz
+        motors[i].ConfigADRC()
+        .AsSpeedC()
+        .ADRC_Womega(42.0f, 9.6f)
+        .ADRC_Physic(2.0e-4f, 0.30f, 0.005f)
+        .ADRC_Limit(15.0f)
+        .SpdLimit(3000.0f)
+        .ADRC_MaxPlannedVel(3000.0f)
+        .ADRC_SOTF(0.5f)
+        .Apply();
         motors[i].driver.Enable();
     }
 
