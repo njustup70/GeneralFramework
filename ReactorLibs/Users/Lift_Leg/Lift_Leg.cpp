@@ -144,12 +144,12 @@ void Lift_Leg::LiftLegCmdRxCallback(uint8_t task_id, const uint8_t* payload, uin
     switch(cmd)
     {
         // 前腿抬高200
-        case 0x01:
+        case 0x02:
             GetInstance().Front_LiftAt200();
         break;
 
         // 前腿放低200
-        case 0x02:
+        case 0x06:
             GetInstance().Front_PutDownAt200();
         break;
 
@@ -159,23 +159,27 @@ void Lift_Leg::LiftLegCmdRxCallback(uint8_t task_id, const uint8_t* payload, uin
         break;
 
         // 前腿放低400
-        case 0x04:
+        case 0x07:
             GetInstance().Front_PutDownAt400();
         break;
 
-        // 后腿归位
-        case 0x05:
-            GetInstance().Back_Origin();        
+        // 前腿归位
+        case 0x04:
+            GetInstance().Front_Origin();
         break;
 
         // 后腿放低200
-        case 0x06:
+        case 0x0B:
             GetInstance().Back_PutDownAt200();
         break;
 
         // 后腿放低400
-        case 0x07:
+        case 0x0F:
             GetInstance().Back_PutDownAt400();
-        break;    
+        break;  
+        // 后腿归位
+        case 0x0C:
+            GetInstance().Back_Origin();        
+        break;          
     }
 }
