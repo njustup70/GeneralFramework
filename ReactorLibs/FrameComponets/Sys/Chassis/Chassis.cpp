@@ -33,17 +33,42 @@ void ChassisType::Start()
 
     chassis_board.RegisterTask(1, ChassisSpeedRxCallback, this);
     chassis_board.RegisterTask(3, DebugOutRxCallback, this);
+    chassis_board.RegisterTask(4, ResetRxCallback, this);
+}
+
+void SendChasOdo(float x_pos, float y_pos, float z_pos)
+{
+    // 6 字节 uint8，完全匹配接收端格式
+    uint8_t payload[6];
+
+    // 放大 100 倍转为 int16
+    int16_t x = (int16_t)(x_pos * 100.0f);
+    int16_t y = (int16_t)(y_pos * 100.0f);
+    int16_t z = (int16_t)(z_pos * 100.0f);
+
+    // 大端格式：高字节 <<8 在前，低字节在后
+    // 对应接收端：payload[0] <<8 | payload[1]
+    payload[0] = (x >> 8) & 0xFF; // x 高8位
+    payload[1] = x & 0xFF;        // x 低8位
+
+    payload[2] = (y >> 8) & 0xFF; // y 高8位
+    payload[3] = y & 0xFF;        // y 低8位
+
+    payload[4] = (z >> 8) & 0xFF; // z 高8位
+    payload[5] = z & 0xFF;        // z 低8位
+
+    chassis_board.SendTask(0x220, 1, payload, sizeof(payload), false);
 }
 
 void ChassisType::Update()
 {
+    static uint8_t cnt = 0;
     // 检测退出debug，关闭所有电机dirver
     if(System.out_from_debugmode == true)
     {
         for (int i = 0; i < 4; i++)
         {
             motors[i].Neutral();
-            motors[i].driver.Disable();
         }
     }
  
@@ -63,11 +88,8 @@ void ChassisType::Update()
     // 更新自解算里程计
     _UpdateChasOdom();
 
-    uint8_t odo_self[12] = {0};
-    memcpy(&odo_self[0], &this->chas_odom.pos.x, sizeof(float));
-    memcpy(&odo_self[4], &this->chas_odom.pos.y, sizeof(float));
-    memcpy(&odo_self[8], &this->chas_odom.pos.z, sizeof(float));
-    chassis_board.SendTask(0x220, 1, odo_self, sizeof(odo_self));
+    // 给A板发送里程计数据
+    SendChasOdo(chas_odom.pos.x, chas_odom.pos.y, chas_odom.pos.z);
 
     targ_velo = targ_speed.Length();
 
@@ -132,7 +154,7 @@ void ChassisType::_UploadSpeed()
         {
             if (motors[i].mode == NoneC)
             {
-                motors[i].Uneutral();
+                motors[i].Uneutral(SpeedC);
             }
         }
     }
@@ -210,7 +232,7 @@ void ChassisType::MoveAt(Vec2 Pos)
     {
         for(int i = 0; i < 4; i++)
         {
-            motors[i].Uneutral();
+            motors[i].Uneutral(SpeedC);
         }
     }
 }
@@ -223,7 +245,7 @@ void ChassisType::RotateAt(float yaw)
     {
         for(int i = 0; i < 4; i++)
         {
-            motors[i].Uneutral();
+            motors[i].Uneutral(SpeedC);
         }
     }
 }
@@ -444,20 +466,36 @@ void ChassisType::DebugOutRxCallback(uint8_t task_id, const uint8_t* payload, ui
     {
         return;
     }
-    if(payload[0] == 0x01)
+    if(task_id == 3 && payload[0] == 0x01)
     {
         for(int i = 0; i < 4; i++)
         {
             GetInstance().motors[i].Neutral();
-            GetInstance().motors[i].driver.Disable();
         }
-        lift_leg.motor_back.Neutral();
-        lift_leg.motor_back.driver.Disable();
+        // 只有个空挡，耦在一起吧
+        Lift_Leg::GetInstance().motor_back.Neutral();
+        Lift_Leg::GetInstance().motor_front_left.Neutral();
+        Lift_Leg::GetInstance().motor_front_right.Neutral();
+    }
+}
 
-        lift_leg.motor_front_left.Neutral();
-        lift_leg.motor_front_left.driver.Disable();
-
-        lift_leg.motor_front_right.Neutral();
-        lift_leg.motor_front_right.driver.Disable();
+void ChassisType::ResetRxCallback(uint8_t task_id, const uint8_t* payload, uint8_t payload_len, void* user_ctx)
+{
+    if(payload == nullptr || payload_len == 0)
+    {
+        return;
+    }
+    if(task_id == 4 && payload[0] == 0x01)
+    {
+        for(int i = 0; i < 4; i++)
+        {
+            GetInstance().motors[i].Uneutral(SpeedC);
+        }
+        Lift_Leg::GetInstance().motor_back.Uneutral(PosC);
+        Lift_Leg::GetInstance().motor_front_left.Uneutral(PosC);
+        Lift_Leg::GetInstance().motor_front_right.Uneutral(PosC);   
+         
+        // 重置里程计
+        GetInstance().chas_odom.pos = Vec3(0, 0, 0);    
     }
 }

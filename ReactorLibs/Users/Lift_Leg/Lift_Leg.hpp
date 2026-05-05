@@ -1,6 +1,7 @@
 #pragma once
 
 #include "System.hpp"
+#include "infrared_detector.hpp"
 
 namespace LiftLegConst
 {
@@ -18,6 +19,8 @@ class Lift_Leg : public Application
 public:
     MotorDJI motor_front_left;
     MotorDJI motor_front_right;
+
+    InfraredDetector little_yellow[3];    // 越野小黄
 
     // 后腿是二合一的
     MotorDJI motor_back;
@@ -48,9 +51,12 @@ private:
     /// @brief 后腿的目标位置
     int _back_targ_pos_code = 0;
 
-    int _front_left_bias = 0;
-    int _front_right_bias = 0;
+    int _front_left_bias;
+    int _front_right_bias;
     int _back_bias = 0;
+
+    int _front_left_start_bias = -22000;
+    int _front_right_start_bias = 18000;
 };
 
 extern Lift_Leg &lift_leg;

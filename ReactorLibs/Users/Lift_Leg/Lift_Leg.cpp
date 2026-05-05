@@ -47,6 +47,12 @@ void Lift_Leg::Start()
     motor_front_left.driver.Enable();
     motor_front_right.driver.Enable();
     motor_back.driver.Enable();
+    
+    Pin little_yellow_pin[3] = {{.port='E', .number=9}, {.port='E', .number=11}, {.port='E', .number=13}};
+    for(int i = 0; i < 3; i++)
+    {
+        little_yellow[i].Init(little_yellow_pin[i]);
+    }
 
     chassis_board.RegisterTask(2, LiftLegCmdRxCallback, this);
 }
@@ -61,18 +67,38 @@ void Lift_Leg::Update()
         return;
     }
 
+    if(System.out_from_debugmode)
+    {
+        motor_front_left.Neutral();
+        motor_front_right.Neutral();
+        motor_back.Neutral();
+        return;
+    }
+
     if (_front_targ_pos_code > half_front_stroke) _front_targ_pos_code = half_front_stroke;
     if (_front_targ_pos_code < -half_front_stroke) _front_targ_pos_code = -half_front_stroke;
 
     // 左腿向上为正，右腿向上为负
-    motor_front_left.SetPos(_front_left_bias + _front_targ_pos_code);
-    motor_front_right.SetPos(_front_right_bias -_front_targ_pos_code);
+    motor_front_left.SetPos(_front_left_start_bias + _front_left_bias + _front_targ_pos_code);
+    motor_front_right.SetPos(_front_right_start_bias + _front_right_bias - _front_targ_pos_code);
 
     // 后腿向上为正
     if (_back_targ_pos_code < -LiftLegConst::BackStrokeCode) _back_targ_pos_code = -LiftLegConst::BackStrokeCode;
     if (_back_targ_pos_code > 0) _back_targ_pos_code = 0;
 
     motor_back.SetPos(_back_bias + _back_targ_pos_code);
+    // if(little_yellow[0].Read())
+    // {
+    //     return;
+    // }
+    // if(little_yellow[1].Read())
+    // {
+    //     return;
+    // }
+    // if(little_yellow[2].Read())
+    // {        
+    //     return;
+    // }
 }
 
 void Lift_Leg::Enable()
