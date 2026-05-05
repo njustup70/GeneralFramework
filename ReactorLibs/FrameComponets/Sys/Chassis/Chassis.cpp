@@ -140,6 +140,10 @@ void ChassisType::_UpdateChasOdom()
     
     chas_odom.pos = chas_odom.pos + delta_move.ToVec3();
     chas_odom.pos.z = chas_theta;
+
+    // 角度归一化,将角度映射到 [-π, π] 范围
+    // 正前方为 0，逆时针增加到 π，顺时针减小到 -π
+    chas_odom.pos.z = atan2(sin(chas_odom.pos.z), cos(chas_odom.pos.z));
 }
 
 void ChassisType::_UploadSpeed()
