@@ -53,7 +53,14 @@ void BspLog_Init(void)
     // 如果确定使用 UART 输出日志，可以在这里获取 huart_host 的句柄
     if (Hardware::RTTLogAtUart)
     {
-        uart_log_handler = BSP::UART::Apply(Hardware::huart_host);
+        if (Hardware::RTTLogUartItrp)
+        {
+            uart_log_handler = BSP::UART::Apply(Hardware::huart_log, BSP::UART::TxMode::Interrupt);
+        }
+        else
+        {
+            uart_log_handler = BSP::UART::Apply(Hardware::huart_log);
+        }
     }
 }
 

@@ -90,8 +90,7 @@ namespace Hardware
 
     /// @note 如果本标志位被激活，日志会被同步发送到 UART_HOST
     extern bool RTTLogAtUart;
-    
-    
+    extern bool RTTLogUartItrp;
 
     /***---------------     框架定时器    ---------------***/
     /// @brief WS2812灯带定时器
