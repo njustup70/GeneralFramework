@@ -57,9 +57,17 @@ static Instance *FindInstByHuart(UART_HandleTypeDef *huart)
 }
 
 /**
- * @brief 申请一个 UART 实例句柄
+ * @brief 申请一个默认 DMA 发送模式的 UART 实例句柄
  */
 Handler BSP::UART::Apply(UartID id, const char* file, int line)
+{
+    return Apply(id, TxMode::Dma, file, line);
+}
+
+/**
+ * @brief 按指定发送模式申请一个 UART 实例句柄
+ */
+Handler BSP::UART::Apply(UartID id, TxMode tx_mode, const char* file, int line)
 {
     UART_HandleTypeDef *huart = ToHalHandle(id);
     
@@ -76,6 +84,11 @@ Handler BSP::UART::Apply(UartID id, const char* file, int line)
     // 如果已经存在，直接返回对应的 Handler
     if (exist_inst != nullptr)
     {
+        // 同一硬件串口的发送模式以首次申请为准，避免运行期切换破坏状态机
+        if (exist_inst->GetTxMode() != tx_mode)
+        {
+            BspLog_LogWarning("[Bsp] Uart TxMode Already Fixed, Ignore New TxMode! [%s:%d]\n", GetFileName(file), line);
+        }
         return Handler(exist_inst);
     }
 
@@ -87,7 +100,7 @@ Handler BSP::UART::Apply(UartID id, const char* file, int line)
     }
     
     // 初始化新实例
-    insts[instance_count].Init(id);
+    insts[instance_count].Init(id, tx_mode);
 
     // 返回新实例的 Handler
     Instance *new_inst = &insts[instance_count];
@@ -135,17 +148,18 @@ Instance::Instance()
     Init(nullptr);
 }
 
-Instance::Instance(UartID id)
+Instance::Instance(UartID id, TxMode tx_mode)
 {
-    Init(id);
+    Init(id, tx_mode);
 }
 
 /**
  * @brief 初始化实例，重置所有成员变量
  */
-void Instance::Init(UartID in_id)
+void Instance::Init(UartID in_id, TxMode tx_mode)
 {
     this->id = in_id;
+    this->tx_mode_ = tx_mode;
     this->rx_callback = nullptr;
     this->rx_setlen_ = 0;
     this->rx_registered_ = 0;
@@ -163,6 +177,14 @@ void Instance::Init(UartID in_id)
 bool Instance::IsUsing(UartID target_id) const
 {
     return (this->id != nullptr && this->id == target_id);
+}
+
+/**
+ * @brief 获取实例首次申请时固定的发送模式
+ */
+TxMode Instance::GetTxMode() const
+{
+    return this->tx_mode_;
 }
 
 void Instance::Transmit(const uint8_t *data, uint16_t len)
@@ -202,8 +224,8 @@ void Instance::Transmit(const uint8_t *data, uint16_t len)
         this->tx_fifo_.head = next_head;
     }
 
-    // 启用DMA发送（如果当前DMA空闲）
-    this->TryStartTxDMA();
+    // 按当前模式启动发送（如果当前发送空闲）
+    this->TryStartTx();
 }
 
 /**
@@ -271,6 +293,20 @@ bool Instance::RegisterRx(uint16_t rx_setlen, RxCallback rx_callback, const char
 }
 
 /**
+ * @brief 按当前发送模式尝试启动发送
+ */
+void Instance::TryStartTx()
+{
+    if (this->tx_mode_ == TxMode::Interrupt)
+    {
+        this->TryStartTxIT();
+        return;
+    }
+
+    this->TryStartTxDMA();
+}
+
+/**
  * @brief 尝试启动DMA发送，如果当前DMA空闲且FIFO中有数据
  */
 void Instance::TryStartTxDMA()
@@ -322,7 +358,55 @@ void Instance::TryStartTxDMA()
 }
 
 /**
- * @brief HAL UART DMA发送完成回调入口，更新FIFO状态并尝试发送剩余数据
+ * @brief 尝试启动TX中断发送，如果当前发送空闲且FIFO中有数据
+ */
+void Instance::TryStartTxIT()
+{
+    if (this->id == nullptr)
+    {
+        BspLog_LogWarning("[Bsp] Unable to Start Tx IT, Empty Instance!\n");
+        return;
+    }
+
+    if (this->tx_fifo_.is_busy != 0)
+    {
+        // 当前发送未完成，等待完成回调继续推进FIFO
+        return;
+    }
+
+    if (this->tx_fifo_.head == this->tx_fifo_.tail)
+    {
+        // FIFO为空，无需启动新的发送事务
+        return;
+    }
+
+    // 计算本次最大连续发送长度，避免一次发送跨越环形缓冲区尾部
+    uint16_t send_len = 0;
+    if (this->tx_fifo_.head > this->tx_fifo_.tail)
+    {
+        send_len = this->tx_fifo_.head - this->tx_fifo_.tail;
+    }
+    else
+    {
+        send_len = BSP_UART_TX_BUF_SIZE - this->tx_fifo_.tail;
+    }
+
+    // 启动UART TX中断发送，完成后由HAL_UART_TxCpltCallback继续推进
+    this->tx_fifo_.sending_len = send_len;
+
+    if (HAL_UART_Transmit_IT(ToHalHandle(this->id), &this->tx_fifo_.buffer[this->tx_fifo_.tail], send_len) == HAL_OK)
+    {
+        this->tx_fifo_.is_busy = 1;
+    }
+    else
+    {
+        BspLog_LogError("[Bsp] Failed to Start HAL_Tx_IT!\n");
+        this->tx_fifo_.sending_len = 0;
+    }
+}
+
+/**
+ * @brief HAL UART 发送完成回调入口，更新FIFO状态并尝试发送剩余数据
  */
 void Instance::OnTxCplt()
 {
@@ -344,28 +428,9 @@ void Instance::OnTxCplt()
         return;
     }
 
-    // 计算下一段连续数据长度（处理环形回绕）
-    uint16_t send_len = 0;
-    if (this->tx_fifo_.head > this->tx_fifo_.tail)
-    {
-        send_len = this->tx_fifo_.head - this->tx_fifo_.tail;
-    }
-    else
-    {
-        send_len = BSP_UART_TX_BUF_SIZE - this->tx_fifo_.tail;
-    }
-
-    // 启动下一段DMA发送
-    this->tx_fifo_.sending_len = send_len;
-    if (HAL_UART_Transmit_DMA(ToHalHandle(this->id), &this->tx_fifo_.buffer[this->tx_fifo_.tail], send_len) == HAL_OK)
-    {
-        this->tx_fifo_.is_busy = 1;
-    }
-    else
-    {
-        this->tx_fifo_.sending_len = 0;
-        this->tx_fifo_.is_busy = 0;
-    }
+    // 释放忙标志，让统一入口按当前模式启动下一段发送
+    this->tx_fifo_.is_busy = 0;
+    this->TryStartTx();
 }
 
 void Instance::OnRxEvent(uint16_t size)
