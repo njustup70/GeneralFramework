@@ -91,9 +91,9 @@ void Monitor::TrackLog()
     }
 
     // 发送编码后的数据
-    if (host_uart.IsValid())
+    if (track_uart.IsValid())
     {
-        host_uart.Transmit(track_send_buf, strlen((char*)track_send_buf));
+        track_uart.Transmit(track_send_buf, strlen((char*)track_send_buf));
     }
 }
 
@@ -140,9 +140,9 @@ void Monitor::TrackLogJustFloat()
     used_bytes += 4;
 
     // 发送原始二进制数据
-    if (host_uart.IsValid())
+    if (track_uart.IsValid())
     {
-        host_uart.Transmit(vofa_buf, used_bytes);
+        track_uart.Transmit(vofa_buf, used_bytes);
     }
 }
 
@@ -294,11 +294,19 @@ void Monitor::Perflize()
 }
 
 
-void Monitor::Init(BSP::UART::UartID huart_host, BSP::UART::UartID huart_farc, bool vofa_mode)
+/**
+ * @brief 初始化监视器
+ * 
+ * @param huart_track 用于发送跟踪数据的串口，传入 nullptr 则不启用跟踪功能；
+ * 请注意，huart_track 只负责track的数据，日志数据取决于bsp_log的配置！！
+ * @param huart_farc 暂未启用
+ * @param vofa_mode 
+ */
+void Monitor::Init(BSP::UART::UartID huart_track, BSP::UART::UartID huart_farc, bool vofa_mode)
 {
-    if (huart_host != nullptr)
+    if (huart_track != nullptr)
     {
-        host_uart = BSP::UART::Apply(huart_host);
+        track_uart = BSP::UART::Apply(huart_track);
     }
 
     if (huart_farc != nullptr)

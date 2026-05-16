@@ -50,14 +50,18 @@ private:
     bool high_performance_mode = false;         // 高性能模式标志位（1000Hz跟踪）
 
 public:
-    BSP::UART::Handler host_uart;
+    BSP::UART::Handler track_uart;
     BSP::UART::Handler farcon_uart;
 
 public:
     /**
-     * @brief 监视器的初始化函数
-     * @note 上位机有两种情况，一种是视觉组的工控机，一种是调试时候的电脑
-     */
+    * @brief 初始化监视器
+    * 
+    * @param huart_track 用于发送跟踪数据的串口，传入 nullptr 则不启用跟踪功能；
+    * 请注意，huart_track 只负责track的数据，日志数据取决于bsp_log的配置！！
+    * @param huart_farc 暂未启用
+    * @param vofa_mode 
+    */
     void Init(BSP::UART::UartID huart_host, BSP::UART::UartID huart_farc, bool vofa_mode = false);
 
     /**
