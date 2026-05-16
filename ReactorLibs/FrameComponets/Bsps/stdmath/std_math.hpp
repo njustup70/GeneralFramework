@@ -318,6 +318,13 @@ Vec3 Cross3(const Vec3 &a, const Vec3 &b);
 /// @param val 目标值
 /// @return 目标值的符号 + / -
 int signf(float val);
+
+// float 4字节->2字节压缩函数
+void PackFloatToInt16(uint8_t* ptr, float val, float scale);
+float UnpackInt16ToFloat(const uint8_t* ptr, float scale);
+
 } // namespace StdMath
+
+
 
 #endif

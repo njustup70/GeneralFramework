@@ -240,3 +240,24 @@ Vec3 Quat::ToEuler() const
 
     return euler;
 }
+
+// float 4字节->2字节压缩函数
+void StdMath::PackFloatToInt16(uint8_t* ptr, float val, float scale)
+{
+  float scaled = val * scale;
+  if (scaled > 32767.0f)  scaled = 32767.0f;
+  if (scaled < -32768.0f) scaled = -32768.0f;
+    
+  int16_t v = static_cast<int16_t>(scaled);
+
+  // 小端
+  ptr[0] = static_cast<uint8_t>(v & 0xFF);         // 低8位
+  ptr[1] = static_cast<uint8_t>((v >> 8) & 0xFF);  // 高8位
+}
+
+float StdMath::UnpackInt16ToFloat(const uint8_t* ptr, float scale)
+{
+  // 小端
+  int16_t raw = static_cast<int16_t>((ptr[1] << 8) | ptr[0]);
+  return static_cast<float>(raw) / scale;    
+}
