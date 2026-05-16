@@ -5,6 +5,8 @@
 #include "System.hpp"
 #include "bsp_log.hpp"
 
+Monitor& APP::monit = Monitor::GetInstance();
+
 const static uint8_t LogPort = 0x01;    // 日志使用的端口号
 const static uint8_t WatchPort = 0x02;  // 监视使用的端口号
 const static uint8_t TrackPort = 0x03;  // 跟踪使用的端口号
