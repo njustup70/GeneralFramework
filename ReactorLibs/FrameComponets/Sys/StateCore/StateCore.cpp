@@ -3,6 +3,9 @@
 #include "stdio.h"
 #include "Monitor.hpp"
 #include "cmsis_os.h"
+#include "bsp_hardware.hpp"
+
+StateCore& APP::state_core = StateCore::GetInstance();
 
 /**
  * @brief 为状态块添加状态链接
@@ -140,7 +143,7 @@ StateBlock& StateCore::GetCurState()
 void StateCore::CoreGraph(const StateGraph& graph)
 {
     uint8_t buf[60];
-    if (Monitor::GetInstance().host_uart.IsValid()) Monitor::GetInstance().host_uart.Transmit((uint8_t *)"StateGraph\n", 11);
+    // if (Hardware::huart_log != nullptr) Hardware::huart_log.Transmit((uint8_t *)"StateGraph\n", 11);
 
     HAL_Delay(10);
     for (uint8_t i = 0; i < graph.stateNums; i++)
@@ -149,7 +152,7 @@ void StateCore::CoreGraph(const StateGraph& graph)
         for (uint8_t j = 0; j < graph.states[i].linkNums; j++)
         {
             int len = snprintf((char *)buf, 48, "%s --> %s\n", graph.states[i].name, graph.states[i].links[j].nextState->name);
-            if (Monitor::GetInstance().host_uart.IsValid()) Monitor::GetInstance().host_uart.Transmit(buf, len);
+            // if (Hardware::huart_log != nullptr) Hardware::huart_log.Transmit(buf, len);
             HAL_Delay(10);
         }
     }
